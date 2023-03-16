@@ -46,3 +46,42 @@ describe("create voucher test suite", () => {
     }).rejects.toMatchObject(conflictError("Voucher already exist."));
   });
 });
+
+describe("apply voucher test suite", () => {
+  it("should be able to apply a voucher succesfully", async () => {
+    const voucher = {
+      id: 1,
+      code: "sup3r1d0l",
+      discount: 30,
+      used: false,
+    };
+
+    const amount = 100;
+
+    jest
+      .spyOn(voucherRepository, "getVoucherByCode")
+      .mockImplementationOnce((): any => {
+        return voucher;
+      });
+
+    jest
+      .spyOn(voucherRepository, "useVoucher")
+      .mockImplementationOnce((): any => {
+        return {
+          id: 1,
+          code: "sup3r1d0l",
+          discount: 30,
+          used: true,
+        };
+      });
+
+    const finalAmount = await voucherService.applyVoucher(voucher.code, amount);
+
+    expect(finalAmount.amount).toBe(amount);
+    expect(finalAmount.discount).toBe(voucher.discount);
+    expect(finalAmount.applied).toBe(true);
+    expect(finalAmount.finalAmount).toBe(
+      amount - amount * (voucher.discount / 100)
+    );
+  });
+});
