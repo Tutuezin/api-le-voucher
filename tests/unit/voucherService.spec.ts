@@ -84,4 +84,29 @@ describe("apply voucher test suite", () => {
       amount - amount * (voucher.discount / 100)
     );
   });
+
+  it("should not be able to apply voucher apply the voucher that does not exist", () => {
+    expect(async () => {
+      const voucher = {
+        id: 1,
+        code: "sup3r1d0l",
+        discount: 30,
+        used: false,
+      };
+
+      const amount = 100;
+
+      jest
+        .spyOn(voucherRepository, "getVoucherByCode")
+        .mockImplementationOnce((): any => {
+          return undefined;
+        });
+
+      jest
+        .spyOn(voucherRepository, "useVoucher")
+        .mockImplementationOnce((): any => {});
+
+      await voucherService.applyVoucher(voucher.code, amount);
+    }).rejects.toMatchObject(conflictError("Voucher does not exist."));
+  });
 });
