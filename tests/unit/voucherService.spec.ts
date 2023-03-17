@@ -75,12 +75,12 @@ describe("apply voucher test suite", () => {
         };
       });
 
-    const finalAmount = await voucherService.applyVoucher(voucher.code, amount);
+    const finalOrder = await voucherService.applyVoucher(voucher.code, amount);
 
-    expect(finalAmount.amount).toBe(amount);
-    expect(finalAmount.discount).toBe(voucher.discount);
-    expect(finalAmount.applied).toBe(true);
-    expect(finalAmount.finalAmount).toBe(
+    expect(finalOrder.amount).toBe(amount);
+    expect(finalOrder.discount).toBe(voucher.discount);
+    expect(finalOrder.applied).toBe(true);
+    expect(finalOrder.finalAmount).toBe(
       amount - amount * (voucher.discount / 100)
     );
   });
@@ -108,5 +108,33 @@ describe("apply voucher test suite", () => {
 
       await voucherService.applyVoucher(voucher.code, amount);
     }).rejects.toMatchObject(conflictError("Voucher does not exist."));
+  });
+
+  it("should not be able to apply voucher that has already been used", async () => {
+    const voucher = {
+      id: 1,
+      code: "sup3r1d0l",
+      discount: 30,
+      used: true,
+    };
+
+    const amount = 100;
+
+    jest
+      .spyOn(voucherRepository, "getVoucherByCode")
+      .mockImplementationOnce((): any => {
+        return voucher;
+      });
+
+    jest
+      .spyOn(voucherRepository, "useVoucher")
+      .mockImplementationOnce((): any => {});
+
+    const finalOrder = await voucherService.applyVoucher(voucher.code, amount);
+
+    expect(finalOrder.amount).toBe(amount);
+    expect(finalOrder.discount).toBe(voucher.discount);
+    expect(finalOrder.applied).toBe(false);
+    expect(finalOrder.finalAmount).toBe(amount);
   });
 });
